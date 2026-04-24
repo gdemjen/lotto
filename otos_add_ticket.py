@@ -1,10 +1,10 @@
 """
-Generate Ötöslottó tickets (5/90) and save them to lotto.db.
+Add Ötöslottó tickets (5/90) to lotto.db — random or manually entered.
 
 Ötöslottó draws every Saturday.
 
 Usage:
-    python otos_generate.py
+    python otos_add_ticket.py
 """
 
 import random
@@ -56,30 +56,57 @@ def save_ticket(conn: sqlite3.Connection, numbers: list[int], draw_date: date):
     )
 
 
+def enter_numbers_manually() -> list[int]:
+    while True:
+        raw = input("Enter 5 numbers (1–90), space-separated: ").strip()
+        parts = raw.split()
+        try:
+            nums = [int(p) for p in parts]
+        except ValueError:
+            print("  Please enter integers only.")
+            continue
+        if len(nums) != 5:
+            print(f"  Need exactly 5 numbers, got {len(nums)}.")
+            continue
+        if any(n < 1 or n > 90 for n in nums):
+            print("  All numbers must be between 1 and 90.")
+            continue
+        if len(set(nums)) != 5:
+            print("  Numbers must be unique.")
+            continue
+        return sorted(nums)
+
+
 def main():
     conn = sqlite3.connect(DB_FILE)
     ensure_table(conn)
 
     while True:
-        # Generate 5 unique numbers from 1-90 in ascending order
-        numbers = sorted(random.sample(range(1, 91), 5))
-        print(f"\nGenerated: {numbers}")
+        print("\n  g - Generate random numbers")
+        print("  m - Enter numbers manually")
+        print("  q - Quit")
+        mode = input("Choice: ").strip().lower()
 
-        # Ask what to do with these numbers
+        if mode == "q":
+            break
+        elif mode == "m":
+            numbers = enter_numbers_manually()
+            print(f"  Manual:    {numbers}")
+        else:
+            numbers = sorted(random.sample(range(1, 91), 5))
+            print(f"\n  Generated: {numbers}")
+
         print("  1 - Drop")
         print("  2 - Keep for next draw  ", next_saturday())
         print("  3 - Keep for next 5 draws")
-        print("  q - Quit")
 
         while True:
             choice = input("Choice: ").strip().lower()
-            if choice in ("1", "2", "3", "q"):
+            if choice in ("1", "2", "3"):
                 break
-            print("  Please enter 1, 2, 3 or q.")
+            print("  Please enter 1, 2 or 3.")
 
-        if choice == "q":
-            break
-        elif choice == "1":
+        if choice == "1":
             print("  Dropped.")
         elif choice == "2":
             draw = next_saturday()
