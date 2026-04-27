@@ -29,14 +29,14 @@ def load_csv(path: str) -> list[tuple]:
             year        = int(cols[0].strip())
             week        = int(cols[1].strip())
             draw_date   = parse_date(cols[2])
-            jackpot     = int(cols[3].strip())
-            jackpot_amt = parse_amount(cols[4])
-            w5          = int(cols[5].strip())
-            prize5      = parse_amount(cols[6])
-            w4          = int(cols[7].strip())
-            prize4      = parse_amount(cols[8])
-            w3          = int(cols[9].strip())
-            prize3      = parse_amount(cols[10])
+            w5          = int(cols[3].strip())   # jackpot winners (5/5)
+            prize5      = parse_amount(cols[4])   # jackpot prize
+            w4          = int(cols[5].strip())   # 4-match winners
+            prize4      = parse_amount(cols[6])
+            w3          = int(cols[7].strip())   # 3-match winners
+            prize3      = parse_amount(cols[8])
+            w2          = int(cols[9].strip())   # 2-match winners
+            prize2      = parse_amount(cols[10])
             num1        = int(cols[11].strip())
             num2        = int(cols[12].strip())
             num3        = int(cols[13].strip())
@@ -44,9 +44,9 @@ def load_csv(path: str) -> list[tuple]:
             num5        = int(cols[15].strip())
 
             rows.append((
-                year, week, draw_date, jackpot, jackpot_amt,
-                w5, prize5, w4, prize4, w3, prize3,
+                year, week, draw_date,
                 num1, num2, num3, num4, num5,
+                w5, prize5, w4, prize4, w3, prize3, w2, prize2,
             ))
     return rows
 
@@ -67,10 +67,10 @@ def main():
     conn.executemany(
         """
         INSERT INTO draws_otos
-            (year, week, draw_date, jackpot, jackpot_amt,
-             w5, prize5, w4, prize4, w3, prize3,
-             num1, num2, num3, num4, num5)
-        VALUES (?,?,?,?,?, ?,?,?,?,?,?, ?,?,?,?,?)
+            (year, week, draw_date,
+             num1, num2, num3, num4, num5,
+             w5, prize5, w4, prize4, w3, prize3, w2, prize2)
+        VALUES (?,?,?, ?,?,?,?,?, ?,?,?,?,?,?,?,?)
         """,
         rows,
     )
@@ -79,17 +79,27 @@ def main():
     # Quick verification
     total  = conn.execute("SELECT COUNT(*) FROM draws_otos").fetchone()[0]
     w_date = conn.execute("SELECT COUNT(*) FROM draws_otos WHERE draw_date IS NOT NULL").fetchone()[0]
-    max_jp = conn.execute("SELECT MAX(jackpot_amt) FROM draws_otos").fetchone()[0]
+
+    latest = conn.execute(
+        "SELECT draw_date, num1, num2, num3, num4, num5 FROM draws_otos "
+        "WHERE draw_date IS NOT NULL ORDER BY draw_date DESC LIMIT 1"
+    ).fetchone()
+
+    last_jp = conn.execute(
+        "SELECT draw_date, w5, prize5, num1, num2, num3, num4, num5 FROM draws_otos "
+        "WHERE w5 > 0 AND draw_date IS NOT NULL ORDER BY draw_date DESC LIMIT 1"
+    ).fetchone()
+
     print(f"\nVerification:")
     print(f"  Total rows    : {total}")
     print(f"  Rows with date: {w_date}")
-    print(f"  Biggest jackpot: {max_jp:,} Ft")
-
-    # Spot-check: 2026 week 16 should be 9 23 45 71 84
-    row = conn.execute(
-        "SELECT num1,num2,num3,num4,num5 FROM draws_otos WHERE year=2026 AND week=16"
-    ).fetchone()
-    print(f"  2026-w16 numbers: {row}")
+    if latest:
+        nums = "  ".join(f"{n:02d}" for n in latest[1:])
+        print(f"  Latest draw   : {latest[0]}  →  {nums}")
+    if last_jp:
+        date, winners, prize, *nums = last_jp
+        nums_str = "  ".join(f"{n:02d}" for n in nums)
+        print(f"  Last jackpot  : {date}  ({winners} winner(s), {prize:,} Ft)  →  {nums_str}")
 
     conn.close()
     print("\nDone.")

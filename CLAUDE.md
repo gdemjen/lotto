@@ -31,7 +31,11 @@ python import_hatos.py
 
 Single SQLite file with two tables. Both are dropped and recreated on each import run.
 
-**`draws_otos`** columns: `year, week, draw_date, jackpot, jackpot_amt, w5, prize5, w4, prize4, w3, prize3, num1–num5`
+**`draws_otos`** columns: `year, week, draw_date, num1–num5, w5, prize5, w4, prize4, w3, prize3, w2, prize2`
+- `w5/prize5`: jackpot (5/5 match) winner count and prize per winner
+- `w4/prize4`: 4-match winners and prize
+- `w3/prize3`: 3-match winners and prize
+- `w2/prize2`: 2-match winners and prize (may be 0 for older rows)
 
 **`draws_hatos`** columns: `year, week, day_of_week, draw_date, jackpot, jackpot_amt, w6, prize6, w5, prize5, w4, prize4, w3, prize3, num1–num6, bonus`
 - `day_of_week`: Hungarian weekday name (e.g. `Csütörtök`, `Vasárnap`)
@@ -43,7 +47,9 @@ Prize amounts are stored as plain integers in Ft (e.g. `6780926220`). Dates are 
 
 Semicolon-delimited, UTF-8 with BOM, newest draw first. No header row. 16 columns:
 
-`year ; week ; draw_date ; jackpot_flag ; jackpot_amt ; w5 ; prize5 ; w4 ; prize4 ; w3 ; prize3 ; num1 ; num2 ; num3 ; num4 ; num5`
+`year ; week ; draw_date ; w5_count ; prize5 ; w4_count ; prize4 ; w3_count ; prize3 ; w2_count ; prize2 ; num1 ; num2 ; num3 ; num4 ; num5`
+
+CSV columns 3–10 map to DB columns `w5, prize5, w4, prize4, w3, prize3, w2, prize2` in that order.
 
 - Pre-~2005 rows: date empty, all prize/winner fields are `0`
 - Number columns occasionally have trailing spaces — always `.strip()` before parsing

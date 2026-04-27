@@ -32,7 +32,7 @@ def check_tickets(conn: sqlite3.Connection) -> list[dict]:
             t.id, t.created_at, t.next_draw,
             t.num1, t.num2, t.num3, t.num4, t.num5,
             d.num1, d.num2, d.num3, d.num4, d.num5,
-            d.jackpot_amt, d.prize5, d.prize4, d.prize3
+            d.prize5, d.prize4, d.prize3, d.prize2
         FROM tickets_otos t
         JOIN draws_otos d ON d.draw_date = t.next_draw
         WHERE t.next_draw <= ?
@@ -44,15 +44,14 @@ def check_tickets(conn: sqlite3.Connection) -> list[dict]:
         (tid, created_at, next_draw,
          t1, t2, t3, t4, t5,
          d1, d2, d3, d4, d5,
-         jackpot_amt, prize5, prize4, prize3) = row
+         prize5, prize4, prize3, prize2) = row
 
         ticket  = {t1, t2, t3, t4, t5}
         drawn   = {d1, d2, d3, d4, d5}
         matches = ticket & drawn
         n       = len(matches)
 
-        # Look up the prize amount for this match count
-        prize_amounts = {5: jackpot_amt, 4: prize4, 3: prize3, 2: 0}
+        prize_amounts = {5: prize5, 4: prize4, 3: prize3, 2: prize2}
         prize_amt = prize_amounts.get(n, 0)
 
         results.append({

@@ -24,9 +24,10 @@ Two games are supported:
 # 1. Download the latest draw data and populate the database
 python download_data.py
 
-# 2. Generate tickets
-python otos_generate.py     # Ötöslottó
-python hatos_generate.py    # Hatoslottó
+# 2. Add tickets (GUI or CLI)
+python otos_gui.py          # Ötöslottó — graphical interface
+python otos_add_ticket.py   # Ötöslottó — command-line
+python hatos_generate.py    # Hatoslottó — command-line
 
 # 3. After the draw — check your tickets
 python otos_check_tickets.py
@@ -43,8 +44,9 @@ lotto/
 ├── import_otos.py            # Import otos.csv → draws_otos table
 ├── import_hatos.py           # Import hatos.csv → draws_hatos table
 ├── utils.py                  # Shared CSV parsing helpers
-├── otos_generate.py          # Generate & save Ötöslottó tickets
-├── hatos_generate.py         # Generate & save Hatoslottó tickets
+├── otos_gui.py               # Tkinter GUI — add & view Ötöslottó tickets
+├── otos_add_ticket.py        # CLI — add Ötöslottó tickets (random or manual)
+├── hatos_generate.py         # CLI — generate & save Hatoslottó tickets
 ├── otos_check_tickets.py     # Check saved Ötöslottó tickets for wins
 ├── hatos_check_tickets.py    # Check saved Hatoslottó tickets for wins
 ├── check_otos.py             # Look up any 5 numbers in draw history
@@ -102,9 +104,9 @@ Each script prints a short verification summary after import:
 ```
 Verification:
   Total rows    : 3607
-  Rows with date: 1120
-  Biggest jackpot: 6,780,926,220 Ft
-  2026-w16 numbers: (9, 23, 45, 71, 84)
+  Rows with date: 3200
+  Latest draw   : 2026-04-25  →  22  23  65  78  80
+  Last jackpot  : 2026-04-18  (1 winner(s), 6 780 926 220 Ft)  →  09  23  45  71  84
 ```
 
 > **Note:** `download_data.py` already calls both import scripts automatically, so you only need to run these manually if you have updated a CSV file by hand.
@@ -120,16 +122,34 @@ Shared helper functions used by both import scripts. Not intended to be run dire
 
 ---
 
-### `otos_generate.py`
+### `otos_gui.py`
 
-Generates random Ötöslottó tickets interactively in a loop. Each iteration picks 5 unique numbers from 1–90 and asks what to do with them:
+Graphical interface for Ötöslottó ticket management. No extra packages required — uses Python's built-in `tkinter`.
+
+```bash
+python otos_gui.py
+```
+
+**My Tickets tab** — shows all saved tickets (upcoming draws highlighted, past draws greyed out). Below the list: generate random numbers or type them manually, then save for the next draw or the next 5 draws. Individual tickets can be deleted.
+
+**Recent Draws tab** — shows the last 20 draws with drawn numbers and winner counts + prize amounts for all four prize tiers (5 / 4 / 3 / 2 hits). Columns resize automatically to fill the window.
+
+---
+
+### `otos_add_ticket.py`
+
+Command-line alternative to `otos_gui.py`. Each iteration offers a choice of generating random numbers or entering them manually, then asks what to do:
 
 ```
-Generated: [8, 11, 23, 57, 71]
-  1 - Drop
-  2 - Keep for next draw   2026-04-26
-  3 - Keep for next 5 draws
+  g - Generate random numbers
+  m - Enter numbers manually
   q - Quit
+Choice: g
+
+  Generated: [8, 11, 23, 57, 71]
+  1 - Drop
+  2 - Keep for next draw   2026-05-03
+  3 - Keep for next 5 draws
 Choice:
 ```
 
@@ -138,12 +158,10 @@ Choice:
 | `1` | Discard the numbers — nothing is saved |
 | `2` | Save one row to `tickets_otos` for the next Saturday |
 | `3` | Save 5 rows to `tickets_otos`, one for each of the next 5 Saturdays |
-| `q` | Exit the loop |
-
-The loop continues generating new numbers until you press `q`.
+| `q` | Exit |
 
 ```bash
-python otos_generate.py
+python otos_add_ticket.py
 ```
 
 ---
@@ -263,12 +281,11 @@ Historical Ötöslottó results. 3,607 rows spanning 1957–present.
 | `year` | INTEGER | Draw year |
 | `week` | INTEGER | Week number |
 | `draw_date` | TEXT | ISO date (NULL for pre-2005 rows) |
-| `jackpot` | INTEGER | 1 = jackpot won, 0 = rolled over |
-| `jackpot_amt` | INTEGER | Jackpot pool in Ft |
-| `w5` / `prize5` | INTEGER | 5-match winner count / prize per winner in Ft |
+| `num1`–`num5` | INTEGER | The 5 drawn numbers, in ascending order |
+| `w5` / `prize5` | INTEGER | Jackpot (5-match) winner count / prize per winner in Ft |
 | `w4` / `prize4` | INTEGER | 4-match winner count / prize per winner in Ft |
 | `w3` / `prize3` | INTEGER | 3-match winner count / prize per winner in Ft |
-| `num1`–`num5` | INTEGER | The 5 drawn numbers, stored in ascending order |
+| `w2` / `prize2` | INTEGER | 2-match winner count / prize per winner in Ft |
 
 ### `draws_hatos`
 
@@ -323,8 +340,8 @@ Every week:
 2.  python otos_check_tickets.py     ← did any saved tickets win?
     python hatos_check_tickets.py
 
-3.  python otos_generate.py          ← generate new tickets for upcoming draws
-    python hatos_generate.py
+3.  python otos_gui.py               ← add new Ötöslottó tickets (GUI)
+    python hatos_generate.py         ← add new Hatoslottó tickets (CLI)
 ```
 
 ---
@@ -358,10 +375,10 @@ LIMIT 1;
 
 **All jackpots over 1 billion Ft:**
 ```sql
-SELECT year, week, draw_date, jackpot_amt
+SELECT year, week, draw_date, w5 AS winners, prize5 AS jackpot_prize
 FROM draws_otos
-WHERE jackpot_amt > 1000000000
-ORDER BY jackpot_amt DESC;
+WHERE prize5 > 1000000000
+ORDER BY prize5 DESC;
 ```
 
 For Hatoslottó queries, replace `draws_otos` with `draws_hatos` and extend number columns to include `num6`.
