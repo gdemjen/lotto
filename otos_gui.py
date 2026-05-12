@@ -124,25 +124,25 @@ class OtosApp(tk.Tk):
 
         # Tab 1: ticket list + add-ticket controls in a single view
         tab_tickets = ttk.Frame(nb, padding=8)
-        nb.add(tab_tickets, text="  My Tickets  ")
+        nb.add(tab_tickets, text="  Megjátszott számaim  ")
         self._build_tickets_tab(tab_tickets)
 
         # Tab 2: read-only table showing the most recent DRAW_LIMIT draws
         tab_draws = ttk.Frame(nb, padding=8)
-        nb.add(tab_draws, text="  Recent Draws  ")
+        nb.add(tab_draws, text="  Legutóbbi húzások  ")
         self._build_table_tab(
             tab_draws,
             cols=[
-                ("draw_date", "Draw Date", 100),
-                ("numbers",   "Numbers",   185),
-                ("j_cnt",     "5 hits",     55),   # jackpot (all 5 correct)
-                ("j_prize",   "Prize 5",   130),
-                ("h4_cnt",    "4 hits",     55),
-                ("h4_prize",  "Prize 4",   130),
-                ("h3_cnt",    "3 hits",     55),
-                ("h3_prize",  "Prize 3",   130),
-                ("h2_cnt",    "2 hits",     55),
-                ("h2_prize",  "Prize 2",   130),
+                ("draw_date", "Húzás dátuma", 100),
+                ("numbers",   "Számok",        185),
+                ("j_cnt",     "5 találat",      55),
+                ("j_prize",   "Nyeremény 5",   130),
+                ("h4_cnt",    "4 találat",      55),
+                ("h4_prize",  "Nyeremény 4",   130),
+                ("h3_cnt",    "3 találat",      55),
+                ("h3_prize",  "Nyeremény 3",   130),
+                ("h2_cnt",    "2 találat",      55),
+                ("h2_prize",  "Nyeremény 2",   130),
             ],
             attr="tree_draws",
         )
@@ -177,9 +177,9 @@ class OtosApp(tk.Tk):
         frm_tree.pack(fill=tk.BOTH, expand=True)
 
         cols = [
-            ("next_draw",  "Draw Date",  110),
-            ("numbers",    "Numbers",    190),
-            ("created_at", "Saved At",   160),
+            ("next_draw",  "Húzás dátuma",  110),
+            ("numbers",    "Számok",         190),
+            ("created_at", "Mentés ideje",   160),
         ]
         self.tree_tickets = ttk.Treeview(
             frm_tree, columns=[c[0] for c in cols], show="headings", selectmode="browse"
@@ -196,14 +196,14 @@ class OtosApp(tk.Tk):
         # Delete button sits just below the table
         frm_del = ttk.Frame(parent)
         frm_del.pack(fill=tk.X, pady=(4, 0))
-        ttk.Button(frm_del, text="Delete selected", command=self.delete_ticket).pack(side=tk.LEFT)
+        ttk.Button(frm_del, text="Kijelölt törlése", command=self.delete_ticket).pack(side=tk.LEFT)
 
         ttk.Separator(parent, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=(10, 6))
 
         # --- lower section: add-ticket controls ---
 
         # Large display showing the current numbers (or "—" when none selected)
-        frm_disp = ttk.LabelFrame(parent, text="Numbers", padding=(16, 6))
+        frm_disp = ttk.LabelFrame(parent, text="Számok", padding=(16, 6))
         frm_disp.pack(fill=tk.X, pady=(0, 8))
         self.lbl_numbers = ttk.Label(
             frm_disp, text="—", font=("Courier New", 22, "bold"), anchor="center"
@@ -214,17 +214,17 @@ class OtosApp(tk.Tk):
         frm_row = ttk.Frame(parent)
         frm_row.pack(fill=tk.X, pady=(0, 6))
 
-        ttk.Button(frm_row, text="Generate", command=self.generate_numbers).pack(
+        ttk.Button(frm_row, text="Generálás", command=self.generate_numbers).pack(
             side=tk.LEFT, padx=(0, 12)
         )
 
-        frm_manual = ttk.LabelFrame(frm_row, text="Enter manually", padding=(6, 4))
+        frm_manual = ttk.LabelFrame(frm_row, text="Kézi megadás", padding=(6, 4))
         frm_manual.pack(side=tk.LEFT)
         self.entry_manual = ttk.Entry(frm_manual, font=("Courier New", 12), width=22)
         self.entry_manual.pack(side=tk.LEFT, padx=(0, 6))
         # Allow submitting manual entry with the Enter key
         self.entry_manual.bind("<Return>", lambda _: self.set_manual())
-        ttk.Button(frm_manual, text="Set", command=self.set_manual).pack(side=tk.LEFT)
+        ttk.Button(frm_manual, text="Beállít", command=self.set_manual).pack(side=tk.LEFT)
 
         # Save buttons — disabled until numbers are set
         frm_save = ttk.Frame(parent)
@@ -232,7 +232,7 @@ class OtosApp(tk.Tk):
 
         self.btn_next = ttk.Button(
             frm_save,
-            text=f"Keep for next draw  ({next_saturday()})",
+            text=f"Mentés következő húzásra  ({next_saturday()})",
             command=self.keep_next,
             state=tk.DISABLED,
         )
@@ -240,7 +240,7 @@ class OtosApp(tk.Tk):
 
         self.btn_five = ttk.Button(
             frm_save,
-            text="Keep for next 5 draws",
+            text="Mentés következő 5 húzásra",
             command=self.keep_five,
             state=tk.DISABLED,
         )
@@ -301,19 +301,19 @@ class OtosApp(tk.Tk):
         try:
             nums = [int(p) for p in parts]
         except ValueError:
-            messagebox.showerror("Invalid input", "Please enter integers only.")
+            messagebox.showerror("Hibás bevitel", "Kérjük, csak egész számokat adjon meg.")
             return
         if len(nums) != 5:
-            messagebox.showerror("Invalid input", f"Need exactly 5 numbers, got {len(nums)}.")
+            messagebox.showerror("Hibás bevitel", f"Pontosan 5 számot kell megadni, {len(nums)} lett megadva.")
             return
         if any(n < 1 or n > 90 for n in nums):
-            messagebox.showerror("Invalid input", "All numbers must be between 1 and 90.")
+            messagebox.showerror("Hibás bevitel", "Minden szám 1 és 90 közé kell essen.")
             return
         if len(set(nums)) != 5:
-            messagebox.showerror("Invalid input", "Numbers must be unique.")
+            messagebox.showerror("Hibás bevitel", "A számok egyediek kell legyenek.")
             return
         self.numbers = sorted(nums)
-        self._show_numbers("Manual")
+        self._show_numbers("Kézzel megadva")
 
     def _show_numbers(self, source: str):
         """Update the number display label and enable the save buttons."""
