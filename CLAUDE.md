@@ -15,8 +15,15 @@ Hungarian lottery historical data project. Two games are supported, each with it
 
 | Script | Purpose |
 |---|---|
+| `download_data.py` | Download both CSVs from szerencsejatek.hu and re-import |
 | `import_otos.py` | Parse otos.csv → `draws_otos` table in lotto.db |
 | `import_hatos.py` | Parse hatos.csv → `draws_hatos` table in lotto.db |
+| `otos_gui.py` | Tkinter GUI for Ötöslottó (tickets + draws + statistics) |
+| `hatos_gui.py` | Tkinter GUI for Hatoslottó (tickets + draws + statistics) |
+| `otos_add_ticket.py` | CLI: generate/enter Ötöslottó tickets and save |
+| `hatos_generate.py` | CLI: generate/enter Hatoslottó tickets and save |
+| `otos_check_tickets.py` | CLI: check saved Ötöslottó tickets against past draws |
+| `hatos_check_tickets.py` | CLI: check saved Hatoslottó tickets against past draws |
 | `check_otos.py` | Interactive: enter 5 numbers, find matching draws |
 | `check_hatos.py` | Interactive: enter 6 numbers, find matching draws |
 | `utils.py` | Shared helpers: `parse_amount()`, `parse_date()` |
@@ -26,6 +33,24 @@ Re-import after CSV updates:
 python import_otos.py
 python import_hatos.py
 ```
+
+## GUI (otos_gui.py / hatos_gui.py)
+
+Both GUIs are Tkinter apps with three tabs:
+
+**Tab 1 – Megjátszott számaim**
+- Treeview of saved tickets (upcoming highlighted, past greyed)
+- Generate random numbers or enter manually → save for next draw or next 5 draws
+- Delete individual tickets
+
+**Tab 2 – Legutóbbi húzások**
+- Last 20 draws with numbers and winner counts + prizes for all prize tiers
+- "Adatok frissítése" button: downloads the CSV in a background thread, reimports, and refreshes the table
+
+**Tab 3 – Elemzések**
+- Dropdown (`PRESET_ANALYSES` dict) + "Megjelenítés" button → populates a Treeview using `_populate_tree(tree, cursor)`
+- Presets: leggyakoribb/legritkább számok, legnagyobb jackpotok, saját szelvények találatai (CROSS JOIN, ≥3 match), legszűkebb/legmagasabb húzás
+- Ad-hoc SQL editor (4-line `tk.Text`) + "Lekérdezés futtatása" → dynamic Treeview with columns from `cursor.description`
 
 ## Database: lotto.db
 
@@ -75,11 +100,13 @@ parse_date("")                     # → None
 ## SQL Query Files
 
 Ad-hoc queries saved in the project root:
-- `highest_minimum.sql` — draw with highest lowest number
-- `lowest_max.sql`
-- `most_often_drawed.sql`
+- `otos_highest_min.sql` — Ötöslottó draw with highest lowest number (ORDER BY num1 DESC)
+- `otos_lowest_max.sql` — Ötöslottó draw with lowest highest number (ORDER BY num5 ASC)
+- `hatos_highest_min.sql` — Hatoslottó equivalent
+- `hatos_lowest_max.sql` — Hatoslottó equivalent
+- `most_often_drawed.sql` — frequency count via UNION ALL + GROUP BY (targets draws_otos)
 
-These target `draws_otos`. For `draws_hatos` queries, replace the table name and extend number columns to include `num6`.
+For `draws_hatos` frequency queries, extend UNION ALL to include `num6`.
 
 ## Obsolete Files
 

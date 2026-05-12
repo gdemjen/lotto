@@ -26,6 +26,7 @@ python download_data.py
 
 # 2. Add tickets (GUI or CLI)
 python otos_gui.py          # Ötöslottó — graphical interface
+python hatos_gui.py         # Hatoslottó — graphical interface
 python otos_add_ticket.py   # Ötöslottó — command-line
 python hatos_generate.py    # Hatoslottó — command-line
 
@@ -44,7 +45,8 @@ lotto/
 ├── import_otos.py            # Import otos.csv → draws_otos table
 ├── import_hatos.py           # Import hatos.csv → draws_hatos table
 ├── utils.py                  # Shared CSV parsing helpers
-├── otos_gui.py               # Tkinter GUI — add & view Ötöslottó tickets
+├── otos_gui.py               # Tkinter GUI — Ötöslottó (tickets, draws, statistics)
+├── hatos_gui.py              # Tkinter GUI — Hatoslottó (tickets, draws, statistics)
 ├── otos_add_ticket.py        # CLI — add Ötöslottó tickets (random or manual)
 ├── hatos_generate.py         # CLI — generate & save Hatoslottó tickets
 ├── otos_check_tickets.py     # Check saved Ötöslottó tickets for wins
@@ -130,9 +132,27 @@ Graphical interface for Ötöslottó ticket management. No extra packages requir
 python otos_gui.py
 ```
 
-**My Tickets tab** — shows all saved tickets (upcoming draws highlighted, past draws greyed out). Below the list: generate random numbers or type them manually, then save for the next draw or the next 5 draws. Individual tickets can be deleted.
+**Megjátszott számaim tab** — shows all saved tickets (upcoming draws highlighted, past draws greyed out). Below the list: generate random numbers or type them manually, then save for the next draw or the next 5 draws. Individual tickets can be deleted.
 
-**Recent Draws tab** — shows the last 20 draws with drawn numbers and winner counts + prize amounts for all four prize tiers (5 / 4 / 3 / 2 hits). Columns resize automatically to fill the window.
+**Legutóbbi húzások tab** — shows the last 20 draws with drawn numbers and winner counts + prize amounts for all four prize tiers (5 / 4 / 3 / 2 hits). Columns resize automatically to fill the window. The **Adatok frissítése** button downloads the latest CSV and reimports it in the background, then refreshes the table.
+
+**Elemzések tab** — statistics and ad-hoc queries. A dropdown offers preset analyses (most/least frequent numbers, biggest jackpots, partial matches on your saved tickets ≥ 3/5, narrowest/highest draws). A built-in SQL editor lets you run any query against `lotto.db` and see results in a dynamic table.
+
+---
+
+### `hatos_gui.py`
+
+Graphical interface for Hatoslottó ticket management, identical in structure to `otos_gui.py`.
+
+```bash
+python hatos_gui.py
+```
+
+**Megjátszott számaim tab** — same as the Ötöslottó GUI but for 6-number tickets. Saves to `tickets_hatos`.
+
+**Legutóbbi húzások tab** — last 20 Hatoslottó draws with the day of the week (Thursday / Sunday), numbers, and all four prize tiers (6 / 5 / 4 / 3 hits). Includes the **Adatok frissítése** download button.
+
+**Elemzések tab** — same preset analyses adapted for Hatoslottó (6 numbers, 1–45 range, `draws_hatos` table). Partial match threshold is ≥ 3/6. Ad-hoc SQL works against the same `lotto.db`.
 
 ---
 
@@ -336,12 +356,14 @@ Your generated Hatoslottó tickets.
 Every week:
 
 1.  python download_data.py          ← fetch latest draws, update DB
+    (or use the "Adatok frissítése" button inside either GUI)
 
 2.  python otos_check_tickets.py     ← did any saved tickets win?
     python hatos_check_tickets.py
 
 3.  python otos_gui.py               ← add new Ötöslottó tickets (GUI)
-    python hatos_generate.py         ← add new Hatoslottó tickets (CLI)
+    python hatos_gui.py              ← add new Hatoslottó tickets (GUI)
+    python hatos_generate.py         ← Hatoslottó tickets via CLI
 ```
 
 ---

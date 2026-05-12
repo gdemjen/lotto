@@ -5,7 +5,10 @@
       "Bash(awk:*)",
       "Bash(sed 's/ //g')",
       "Bash(grep -E '^[0-9]+$')",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(python3 -m py_compile otos_gui.py)",
+      "Bash(python3 -m py_compile hatos_gui.py)",
+      "PowerShell(Get-Command *)"
     ]
   }
 }
